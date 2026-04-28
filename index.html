@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BG Image Generator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <img src="logo.png" alt="BG Image Generator" class="logo" />
+    <h1>BG Image Generator</h1>
+
+    <section class="card" id="api-key-section">
+      <h2>OpenAI API Key</h2>
+      <div class="input-row">
+        <input type="password" id="api-key-input" placeholder="sk-..." />
+        <button id="save-key-btn">Save Key</button>
+      </div>
+      <p id="key-status" class="status"></p>
+    </section>
+
+    <section class="card" id="prompt-section">
+      <h2>Master Prompt</h2>
+      <textarea id="master-prompt" rows="5" placeholder="Enter your master prompt. Use {{column_name}} to reference CSV columns."></textarea>
+      <div class="size-row">
+        <label>Model:
+          <select id="image-model">
+            <option value="gpt-image-1">gpt-image-1</option>
+            <option value="dall-e-3">DALL-E 3</option>
+            <option value="dall-e-2">DALL-E 2</option>
+          </select>
+        </label>
+        <label>Image Size:
+          <select id="image-size"></select>
+        </label>
+      </div>
+      <div class="prompt-actions">
+        <button id="save-prompt-btn">Save Prompt</button>
+        <button id="load-prompt-btn" class="secondary">History</button>
+      </div>
+    </section>
+
+    <div id="prompt-history-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Prompt History</h3>
+          <button id="close-history-btn" class="close-btn">&times;</button>
+        </div>
+        <ul id="prompt-history-list"></ul>
+      </div>
+    </div>
+
+    <section class="card" id="csv-section">
+      <h2>CSV Upload</h2>
+      <div class="csv-source-row">
+        <input type="file" id="csv-file" accept=".csv" />
+        <span class="or-divider">or try a sample:</span>
+        <select id="sample-select">
+          <option value="">Choose sample...</option>
+          <option value="cards">Character Cards</option>
+          <option value="tiles">Map Tiles</option>
+          <option value="boxes">Box Covers</option>
+        </select>
+      </div>
+      <div id="csv-preview" class="hidden">
+        <p><strong>Rows:</strong> <span id="csv-row-count"></span></p>
+        <p class="column-hint">Click a column to insert it into your prompt:</p>
+        <div id="csv-columns" class="column-tags"></div>
+        <table id="csv-table"></table>
+      </div>
+    </section>
+
+    <section class="card" id="generate-section">
+      <h2>Generate Images</h2>
+      <div class="filename-row">
+        <label>Filename pattern:
+          <input type="text" id="filename-pattern" value="image-{{rowNumber}}" placeholder="image-{{rowNumber}}" />
+        </label>
+        <span class="filename-hint">Use <code>{{rowNumber}}</code> or any <code>{{column}}</code></span>
+      </div>
+      <div class="generate-controls">
+        <label>Rows to generate:
+          <input type="number" id="row-limit" min="1" value="1" />
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="all-rows" /> All rows
+        </label>
+        <button id="generate-btn" class="primary">Generate</button>
+        <button id="stop-btn" class="danger hidden">Stop</button>
+      </div>
+      <p id="cost-estimate" class="cost-estimate"></p>
+      <div id="progress" class="hidden">
+        <div class="progress-bar"><div id="progress-fill"></div></div>
+        <p id="progress-text"></p>
+      </div>
+    </section>
+
+    <section class="card" id="results-section" class="hidden">
+      <h2>Results</h2>
+      <div id="results-grid"></div>
+      <button id="download-all-btn" class="hidden">Download All</button>
+    </section>
+  </div>
+
+    <div id="image-modal" class="modal hidden">
+      <div class="modal-content image-modal-content">
+        <button id="close-image-btn" class="close-btn">&times;</button>
+        <img id="modal-image" src="" alt="Full size image" />
+        <p id="modal-prompt" class="modal-prompt"></p>
+      </div>
+    </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
