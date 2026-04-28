@@ -122,6 +122,36 @@ button.danger:hover {
   line-height: 1;
 }
 
+.api-help {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.api-help summary {
+  cursor: pointer;
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.api-help summary:hover {
+  text-decoration: underline;
+}
+
+.api-help ol {
+  margin: 0.5rem 0 0.5rem 1.25rem;
+  line-height: 1.8;
+}
+
+.api-help a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.api-help a:hover {
+  text-decoration: underline;
+}
+
 .status {
   font-size: 0.85rem;
   margin-top: 0.5rem;
