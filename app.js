@@ -264,6 +264,7 @@ const csvFileInput = $("#csv-file");
 csvFileInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
+  sampleSelect.value = "";
   const reader = new FileReader();
   reader.onload = (ev) => {
     parseCSV(ev.target.result);
@@ -354,7 +355,11 @@ function renderCSVPreview() {
 
   const rowLimit = $("#row-limit");
   rowLimit.max = csvData.rows.length;
-  rowLimit.value = Math.min(1, csvData.rows.length);
+  if (allRowsCheckbox.checked) {
+    rowLimit.value = csvData.rows.length;
+  } else {
+    rowLimit.value = Math.min(1, csvData.rows.length);
+  }
   updateCostEstimate();
 }
 
@@ -395,6 +400,9 @@ const resultsGrid = $("#results-grid");
 const downloadAllBtn = $("#download-all-btn");
 
 allRowsCheckbox.addEventListener("change", () => {
+  if (allRowsCheckbox.checked && csvData.rows.length > 0) {
+    rowLimitInput.value = csvData.rows.length;
+  }
   rowLimitInput.disabled = allRowsCheckbox.checked;
   updateCostEstimate();
 });
