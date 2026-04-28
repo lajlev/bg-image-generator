@@ -19,26 +19,34 @@ h2, h3, .card-key > summary {
 
 /* Hero */
 .hero {
-  text-align: center;
-  padding: 2.5rem 1rem 2.5rem;
+  padding: 1.5rem 1.5rem;
   background: #111;
   border-bottom: 2px solid #333;
 }
 
+.hero-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
 .logo {
   display: block;
-  height: 200px;
+  height: 160px;
   width: auto;
-  margin: 0 auto 0.75rem;
   image-rendering: pixelated;
+  flex-shrink: 0;
 }
 
 .tagline {
   color: #777;
   font-size: 0.9rem;
-  max-width: 480px;
-  margin: 0 auto;
   line-height: 1.5;
+  text-align: right;
 }
 
 /* Layout */
@@ -821,8 +829,17 @@ button.danger:disabled {
     padding: 0 0.75rem 2rem;
   }
 
+  .hero-inner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .tagline {
+    text-align: center;
+  }
+
   .logo {
-    height: 140px;
+    height: 120px;
   }
 
   .card {
