@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://lajlev.github.io/bg-image-generator/">Live Demo</a>
+  <a href="https://lajlev.github.io/bg-image-generator/">Live Demo</a> · <a href="https://lajlev.github.io/bg-image-generator/tutorial.mp4">Watch Tutorial</a>
 </p>
 
 ---
