@@ -48,6 +48,7 @@ function populateSizes(model, preferSize) {
   } else {
     imageSize.value = config.sizes[0].value;
   }
+  localStorage.setItem("image_size", imageSize.value);
   updateCostEstimate();
 }
 
@@ -75,6 +76,18 @@ function updateCostEstimate() {
 const apiKeyInput = $("#api-key-input");
 const saveKeyBtn = $("#save-key-btn");
 const keyStatus = $("#key-status");
+const apiKeySection = $("#api-key-section");
+const keyBadge = $("#key-badge");
+
+function updateKeyUI(hasKey) {
+  if (hasKey) {
+    apiKeySection.removeAttribute("open");
+    keyBadge.classList.remove("hidden");
+  } else {
+    apiKeySection.setAttribute("open", "");
+    keyBadge.classList.add("hidden");
+  }
+}
 
 function loadApiKey() {
   const key = localStorage.getItem("openai_api_key") || "";
@@ -83,6 +96,7 @@ function loadApiKey() {
     keyStatus.textContent = "Key saved";
     keyStatus.className = "status success";
   }
+  updateKeyUI(!!key);
 }
 
 saveKeyBtn.addEventListener("click", () => {
@@ -90,11 +104,13 @@ saveKeyBtn.addEventListener("click", () => {
   if (!key) {
     keyStatus.textContent = "Please enter a key";
     keyStatus.className = "status error";
+    updateKeyUI(false);
     return;
   }
   localStorage.setItem("openai_api_key", key);
   keyStatus.textContent = "Key saved";
   keyStatus.className = "status success";
+  updateKeyUI(true);
 });
 
 // --- Master Prompt ---
@@ -106,10 +122,12 @@ const savePromptBtn = $("#save-prompt-btn");
 const loadPromptBtn = $("#load-prompt-btn");
 
 imageSize.addEventListener("change", () => {
+  localStorage.setItem("image_size", imageSize.value);
   updateCostEstimate();
 });
 
 imageModel.addEventListener("change", () => {
+  localStorage.setItem("image_model", imageModel.value);
   populateSizes(imageModel.value, imageSize.value);
 });
 
@@ -198,32 +216,32 @@ function renderPromptHistory() {
 // --- Sample Data ---
 
 const samples = {
-  cards: {
-    prompt: "A board game card illustration of a {{character_name}}, a {{character_type}} with {{ability}}. {{art_style}} art style, rich colors, card game artwork, detailed fantasy illustration.",
-    csv: `character_name,character_type,ability,art_style
-Shadow Thief,Rogue Assassin,vanishing into darkness,Dark Fantasy
-Iron Guardian,Dwarven Paladin,an unbreakable shield,Classical Oil Painting
-Storm Caller,Elven Mage,summoning lightning bolts,Watercolor
-Beast Tamer,Halfling Ranger,commanding wild wolves,Art Nouveau
-Flame Dancer,Fire Genasi Monk,controlling sacred flames,Ukiyo-e`,
+  pirates: {
+    prompt: "{{card_name}}: {{description}}, set {{location}}. {{style}}, rich detail, dramatic lighting.",
+    csv: `card_name,description,location,style
+Captain Blacktide,a fearsome pirate captain with a cursed compass and a parrot on her shoulder,on the deck of a burning galleon at sunset,Golden Age illustration
+The Kraken's Maw,a massive tentacled sea monster emerging from a whirlpool,in a stormy open ocean under lightning-filled skies,Dark maritime painting
+Smuggler's Cove,a hidden bay with caves full of stolen treasure and rowboats,along a tropical coastline with dense jungle cliffs,Watercolor map art
+Cannon Barrage,pirates firing a broadside volley at a royal navy frigate,in a narrow strait between two rocky islands,Action comic book style
+Cursed Doubloon,a glowing gold coin with a skull imprint hovering above skeletal hands,in a candlelit treasure vault deep underground,Dark fantasy illustration`,
   },
-  tiles: {
-    prompt: "A top-down board game tile depicting a {{terrain}} with {{feature}}. {{mood}} atmosphere, {{season}} setting, tabletop game art, seamless tile illustration, flat perspective.",
-    csv: `terrain,feature,mood,season
-Dense Forest,a hidden elven shrine,Mysterious,Autumn
-Frozen Lake,cracked ice and a sunken ship,Eerie,Winter
-Desert Canyon,ancient carved ruins,Scorching,Summer
-Swamp Marsh,glowing mushrooms and fog,Ominous,Spring
-Volcanic Crater,rivers of flowing lava,Apocalyptic,Dry season`,
+  space: {
+    prompt: "{{card_name}}: {{description}}, {{setting}}. {{style}}, cinematic composition, vivid colors.",
+    csv: `card_name,description,setting,style
+Nebula Station Kepler,a massive rotating space station orbiting inside a pink and blue nebula,deep space near a dying star,Retro sci-fi poster art
+Xenobiologist Zara,an alien scientist in a biosuit examining glowing plant specimens,inside a biodome greenhouse on a jungle moon,Moebius-inspired illustration
+Warp Drive Malfunction,a starship tearing through a fractured dimensional rift with sparks and energy arcs,the boundary between normal space and hyperspace,Psychedelic 70s sci-fi
+Mining Colony Titan-7,a gritty industrial outpost carved into an asteroid with cargo ships docking,the surface of a barren asteroid belt,Blade Runner cyberpunk
+First Contact Protocol,two species meeting for the first time across a holographic table,aboard a diplomatic cruiser with a planet visible through the viewport,Clean futuristic concept art`,
   },
-  boxes: {
-    prompt: "A board game box cover for \"{{game_title}}\", a {{genre}} game for {{player_count}} players. The scene shows {{scene}}. Epic composition, vibrant colors, professional board game cover art.",
-    csv: `game_title,genre,player_count,scene
-Realm of Crowns,Medieval strategy,2-4,rival kings clashing on a battlefield at dawn
-Starship Drift,Sci-fi racing,2-6,spaceships weaving through an asteroid belt
-Depths of Dunholm,Dungeon crawler,1-5,adventurers descending into a glowing underground cavern
-Harvest Moon Market,Farming euro,1-4,a bustling village market with colorful produce stalls
-Pirates of the Shattered Sea,Adventure,2-5,pirates boarding a galleon during a dramatic storm`,
+  medieval: {
+    prompt: "{{card_name}}: {{description}}, {{location}}. {{style}}, rich colors, detailed.",
+    csv: `card_name,description,location,style
+The Grand Cathedral,a towering gothic cathedral with stained glass windows and flying buttresses,at the heart of a walled city on a hilltop,Detailed architectural illustration
+Harvest Festival,villagers celebrating with overflowing market stalls and musicians in a town square,in a prosperous farming village surrounded by golden wheat fields,Warm Renaissance painting
+The King's Council,advisors and nobles gathered around a map-covered war table debating strategy,inside a torch-lit stone castle chamber,Medieval manuscript illumination
+Siege of Ironhold,an army with trebuchets and siege towers attacking a fortress on a cliff,at a mountain pass fortress during a snowstorm,Epic battle scene oil painting
+The Traveling Merchant,a caravan of wagons and camels loaded with exotic silks and spices crossing a stone bridge,on a busy trade road between two rival kingdoms,Storybook illustration`,
   },
 };
 
@@ -386,6 +404,10 @@ rowLimitInput.addEventListener("input", updateCostEstimate);
 generateBtn.addEventListener("click", startGeneration);
 stopBtn.addEventListener("click", () => {
   stopRequested = true;
+  stopBtn.disabled = true;
+  stopBtn.textContent = "Stopping...";
+  progressText.innerHTML = "Stopping after current image finishes...";
+  progressFill.style.background = "#f59e0b";
 });
 
 const flavorTexts = [
@@ -521,9 +543,15 @@ const flavorTexts = [
   ["Setting up the board while everyone else gets snacks...", "Every game night"],
 ];
 
+const flavorAnimations = ["flavor-fade-in", "flavor-slide-up", "flavor-slide-down", "flavor-zoom-in", "flavor-blur-in", "flavor-typewriter"];
+
 function updateFlavorText(current, total) {
   const [msg, game] = flavorTexts[Math.floor(Math.random() * flavorTexts.length)];
+  const anim = flavorAnimations[Math.floor(Math.random() * flavorAnimations.length)];
+  progressText.className = "";
+  void progressText.offsetWidth;
   progressText.innerHTML = `(${current}/${total}) ${escapeHtml(msg)} <span class="flavor-game">— ${escapeHtml(game)}</span>`;
+  progressText.classList.add(anim);
 }
 
 function randomFlavorText() {
@@ -587,12 +615,16 @@ async function startGeneration() {
   }
 
   progressFill.style.width = "100%";
+  progressFill.style.background = "";
   progressText.textContent = stopRequested
     ? `Stopped. Generated ${generatedImages.length} of ${limit} images.`
     : `Done. Generated ${generatedImages.length} images.`;
+  progressText.style.fontStyle = "normal";
 
   generateBtn.disabled = false;
   stopBtn.classList.add("hidden");
+  stopBtn.disabled = false;
+  stopBtn.textContent = "Stop";
 
   if (generatedImages.length > 0) {
     downloadAllBtn.classList.remove("hidden");
@@ -674,22 +706,33 @@ function addErrorCard(message, prompt, rowNum) {
 }
 
 async function downloadAll(images) {
+  downloadAllBtn.disabled = true;
+  downloadAllBtn.textContent = "Zipping images...";
+
+  const zip = new JSZip();
+
   for (let i = 0; i < images.length; i++) {
     const { url, filename } = images[i];
     try {
       const res = await fetch(url);
       const blob = await res.blob();
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${filename}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
+      zip.file(`${filename}.png`, blob);
     } catch {
-      console.error(`Failed to download image for row ${images[i].row}`);
+      console.error(`Failed to add image for row ${images[i].row}`);
     }
   }
+
+  const zipBlob = await zip.generateAsync({ type: "blob" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(zipBlob);
+  a.download = "generated-images.zip";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+
+  downloadAllBtn.disabled = false;
+  downloadAllBtn.textContent = "Download all images";
 }
 
 function escapeHtml(str) {
@@ -724,4 +767,9 @@ imageModal.addEventListener("click", (e) => {
 
 // --- Init ---
 loadApiKey();
-populateSizes(imageModel.value, "1024x1024");
+const savedModel = localStorage.getItem("image_model");
+const savedSize = localStorage.getItem("image_size");
+if (savedModel && modelConfig[savedModel]) {
+  imageModel.value = savedModel;
+}
+populateSizes(imageModel.value, savedSize || "1024x1024");

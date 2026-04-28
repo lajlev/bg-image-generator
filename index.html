@@ -20,53 +20,143 @@
   <meta name="twitter:image" content="https://lajlev.github.io/bg-image-generator/logo.png">
 
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖼️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
+  <header class="hero">
     <img src="logo.png" alt="BG Image Generator" class="logo" />
-    <h1>BG Image Generator</h1>
+    <p class="tagline">Batch generate images from a CSV file using OpenAI.<br>Upload your data, write a prompt template, and generate art at scale.</p>
+  </header>
 
-    <section class="card" id="api-key-section">
-      <h2>OpenAI API Key</h2>
-      <div class="input-row">
-        <input type="password" id="api-key-input" placeholder="sk-..." />
-        <button id="save-key-btn">Save Key</button>
-      </div>
-      <p id="key-status" class="status"></p>
-      <details class="api-help">
-        <summary>How do I get an OpenAI API key?</summary>
-        <ol>
-          <li>Go to <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a></li>
-          <li>Sign in or create an account</li>
-          <li>Click "Create new secret key"</li>
-          <li>Copy the key and paste it above</li>
-        </ol>
-        <p>Watch this short walkthrough: <a href="https://youtu.be/J3y1dOpz9R4?si=pKvO1FbkQO39S6DC" target="_blank" rel="noopener">How to get your OpenAI API key (YouTube)</a></p>
-      </details>
-    </section>
+  <div class="container">
+    <div class="grid-layout">
 
-    <section class="card" id="prompt-section">
-      <h2>Master Prompt</h2>
-      <textarea id="master-prompt" rows="5" placeholder="Enter your master prompt. Use {{column_name}} to reference CSV columns."></textarea>
-      <div class="size-row">
-        <label>Model:
-          <select id="image-model">
-            <option value="gpt-image-1">gpt-image-1</option>
-            <option value="dall-e-3">DALL-E 3</option>
-            <option value="dall-e-2">DALL-E 2</option>
-          </select>
-        </label>
-        <label>Image Size:
-          <select id="image-size"></select>
-        </label>
+      <!-- Row 1 Left: Header + API Key -->
+      <div class="grid-cell">
+        <details class="card card-key" id="api-key-section">
+          <summary>OpenAI API Key <span id="key-badge" class="key-badge hidden">Connected</span></summary>
+          <div class="card-body">
+            <div class="input-row">
+              <input type="password" id="api-key-input" placeholder="sk-..." />
+              <button id="save-key-btn">Save Key</button>
+            </div>
+            <p id="key-status" class="status"></p>
+            <details class="api-help">
+              <summary>How do I get an OpenAI API key?</summary>
+              <ol>
+                <li>Go to <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a></li>
+                <li>Sign in or create an account</li>
+                <li>Click "Create new secret key"</li>
+                <li>Copy the key and paste it above</li>
+              </ol>
+              <p>Watch this walkthrough: <a href="https://youtu.be/J3y1dOpz9R4?si=pKvO1FbkQO39S6DC" target="_blank" rel="noopener">How to get your OpenAI API key (YouTube)</a></p>
+            </details>
+          </div>
+        </details>
       </div>
-      <div class="prompt-actions">
-        <button id="save-prompt-btn">Save Prompt</button>
-        <button id="load-prompt-btn" class="secondary">History</button>
-      </div>
-    </section>
 
+      <!-- Row 1 Right: Upload Data -->
+      <div class="grid-cell">
+        <section class="card" id="csv-section">
+          <div class="step-header">
+            <span class="step-number">1</span>
+            <h2>Upload your data</h2>
+          </div>
+          <div class="csv-source-row">
+            <label class="file-upload-label">
+              <span>Choose CSV file</span>
+              <input type="file" id="csv-file" accept=".csv" />
+            </label>
+            <span class="or-divider">or</span>
+            <select id="sample-select">
+              <option value="">Try a sample set...</option>
+              <option value="pirates">Pirate Adventure</option>
+              <option value="space">Space Exploration</option>
+              <option value="medieval">Medieval Kingdom</option>
+            </select>
+          </div>
+          <div id="csv-preview" class="hidden">
+            <div class="csv-meta">
+              <span><strong><span id="csv-row-count"></span></strong> rows loaded</span>
+            </div>
+            <p class="column-hint">Click a column to insert it into your prompt:</p>
+            <div id="csv-columns" class="column-tags"></div>
+            <div class="table-wrap">
+              <table id="csv-table"></table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Row 2 Left: Write Prompt -->
+      <div class="grid-cell">
+        <section class="card" id="prompt-section">
+          <div class="step-header">
+            <span class="step-number">2</span>
+            <h2>Write your prompt</h2>
+          </div>
+          <textarea id="master-prompt" rows="4" placeholder="Describe the image you want. Use {{column_name}} to insert CSV values per row."></textarea>
+          <div class="prompt-settings">
+            <div class="setting-group">
+              <label class="setting-label">Model
+                <select id="image-model">
+                  <option value="gpt-image-1">gpt-image-1</option>
+                  <option value="dall-e-3">DALL-E 3</option>
+                  <option value="dall-e-2">DALL-E 2</option>
+                </select>
+              </label>
+              <label class="setting-label">Size
+                <select id="image-size"></select>
+              </label>
+            </div>
+            <div class="prompt-actions">
+              <button id="save-prompt-btn" class="btn-sm">Save prompt</button>
+              <button id="load-prompt-btn" class="btn-sm secondary">History</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Row 2 Right: Generate -->
+      <div class="grid-cell">
+        <section class="card" id="generate-section">
+          <div class="step-header">
+            <span class="step-number">3</span>
+            <h2>Generate &amp; download</h2>
+          </div>
+          <div class="generate-grid">
+            <div class="generate-options">
+              <label class="setting-label">Rows
+                <div class="rows-input">
+                  <input type="number" id="row-limit" min="1" value="1" />
+                  <label class="checkbox-label"><input type="checkbox" id="all-rows" /> All</label>
+                </div>
+              </label>
+              <label class="setting-label">Filename
+                <input type="text" id="filename-pattern" value="image-{{rowNumber}}" placeholder="image-{{rowNumber}}" class="filename-input" />
+              </label>
+            </div>
+            <div class="generate-action">
+              <p id="cost-estimate" class="cost-estimate"></p>
+              <div class="generate-buttons">
+                <button id="generate-btn" class="primary">Generate images</button>
+                <button id="stop-btn" class="danger hidden">Stop</button>
+              </div>
+            </div>
+          </div>
+          <div id="progress" class="hidden">
+            <div class="progress-bar"><div id="progress-fill"></div></div>
+            <p id="progress-text"></p>
+          </div>
+        </section>
+      </div>
+
+    </div>
+
+    <!-- Prompt History Modal -->
     <div id="prompt-history-modal" class="modal hidden">
       <div class="modal-content">
         <div class="modal-header">
@@ -77,66 +167,28 @@
       </div>
     </div>
 
-    <section class="card" id="csv-section">
-      <h2>CSV Upload</h2>
-      <div class="csv-source-row">
-        <input type="file" id="csv-file" accept=".csv" />
-        <span class="or-divider">or try a sample:</span>
-        <select id="sample-select">
-          <option value="">Choose sample...</option>
-          <option value="cards">Character Cards</option>
-          <option value="tiles">Map Tiles</option>
-          <option value="boxes">Box Covers</option>
-        </select>
-      </div>
-      <div id="csv-preview" class="hidden">
-        <p><strong>Rows:</strong> <span id="csv-row-count"></span></p>
-        <p class="column-hint">Click a column to insert it into your prompt:</p>
-        <div id="csv-columns" class="column-tags"></div>
-        <table id="csv-table"></table>
-      </div>
-    </section>
-
-    <section class="card" id="generate-section">
-      <h2>Generate Images</h2>
-      <div class="filename-row">
-        <label>Filename pattern:
-          <input type="text" id="filename-pattern" value="image-{{rowNumber}}" placeholder="image-{{rowNumber}}" />
-        </label>
-        <span class="filename-hint">Use <code>{{rowNumber}}</code> or any <code>{{column}}</code></span>
-      </div>
-      <div class="generate-controls">
-        <label>Rows to generate:
-          <input type="number" id="row-limit" min="1" value="1" />
-        </label>
-        <label class="checkbox-label">
-          <input type="checkbox" id="all-rows" /> All rows
-        </label>
-        <button id="generate-btn" class="primary">Generate</button>
-        <button id="stop-btn" class="danger hidden">Stop</button>
-      </div>
-      <p id="cost-estimate" class="cost-estimate"></p>
-      <div id="progress" class="hidden">
-        <div class="progress-bar"><div id="progress-fill"></div></div>
-        <p id="progress-text"></p>
-      </div>
-    </section>
-
-    <section class="card" id="results-section" class="hidden">
-      <h2>Results</h2>
+    <!-- Results (full width) -->
+    <section class="card" id="results-section">
       <div id="results-grid"></div>
-      <button id="download-all-btn" class="hidden">Download All</button>
+      <button id="download-all-btn" class="primary hidden">Download all images</button>
     </section>
+
   </div>
 
-    <div id="image-modal" class="modal hidden">
-      <div class="modal-content image-modal-content">
-        <button id="close-image-btn" class="close-btn">&times;</button>
-        <img id="modal-image" src="" alt="Full size image" />
-        <p id="modal-prompt" class="modal-prompt"></p>
-      </div>
+  <!-- Image Lightbox -->
+  <div id="image-modal" class="modal hidden">
+    <div class="modal-content image-modal-content">
+      <button id="close-image-btn" class="close-btn">&times;</button>
+      <img id="modal-image" src="" alt="Full size image" />
+      <p id="modal-prompt" class="modal-prompt"></p>
     </div>
+  </div>
 
+  <footer class="footer">
+    <p>Your API key never leaves your browser. No backend, no tracking. Only sending your prompts to OpenAI. Your created images are not saved anywhere.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
