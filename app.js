@@ -273,15 +273,25 @@ csvFileInput.addEventListener("change", (e) => {
   reader.readAsText(file);
 });
 
+function detectDelimiter(line) {
+  const semi = (line.match(/;/g) || []).length;
+  const comma = (line.match(/,/g) || []).length;
+  const tab = (line.match(/\t/g) || []).length;
+  if (semi > comma && semi >= tab) return ";";
+  if (tab > comma) return "\t";
+  return ",";
+}
+
 function parseCSV(text) {
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length === 0) {
     csvData = { headers: [], rows: [] };
     return;
   }
-  const headers = parseCSVLine(lines[0]);
+  const delimiter = detectDelimiter(lines[0]);
+  const headers = parseCSVLine(lines[0], delimiter);
   const rows = lines.slice(1).map((line) => {
-    const values = parseCSVLine(line);
+    const values = parseCSVLine(line, delimiter);
     const row = {};
     headers.forEach((h, i) => {
       row[h] = values[i] || "";
@@ -291,7 +301,7 @@ function parseCSV(text) {
   csvData = { headers, rows };
 }
 
-function parseCSVLine(line) {
+function parseCSVLine(line, delimiter) {
   const result = [];
   let current = "";
   let inQuotes = false;
@@ -309,7 +319,7 @@ function parseCSVLine(line) {
     } else {
       if (ch === '"') {
         inQuotes = true;
-      } else if (ch === ",") {
+      } else if (ch === delimiter) {
         result.push(current.trim());
         current = "";
       } else {
