@@ -52,16 +52,72 @@ function populateSizes(model, preferSize) {
   updateCostEstimate();
 }
 
+function parseRowSelection(input, maxRows) {
+  if (maxRows === 0) return { rows: [], error: null };
+  const trimmed = (input || "").trim();
+  if (!trimmed) return { rows: [], error: "Enter rows like: 1, 3, 5-8" };
+  const seen = new Set();
+  const rows = [];
+  const parts = trimmed.split(",").map((p) => p.trim()).filter(Boolean);
+  for (const part of parts) {
+    const rangeMatch = part.match(/^(\d+)\s*-\s*(\d+)$/);
+    if (rangeMatch) {
+      const start = Number(rangeMatch[1]);
+      const end = Number(rangeMatch[2]);
+      if (start < 1 || end < 1) return { rows: [], error: `Row numbers start at 1 (got "${part}")` };
+      if (start > end) return { rows: [], error: `Invalid range "${part}" — start must be <= end` };
+      if (end > maxRows) return { rows: [], error: `Row ${end} out of range (CSV has ${maxRows} rows)` };
+      for (let i = start; i <= end; i++) {
+        if (!seen.has(i)) { seen.add(i); rows.push(i); }
+      }
+    } else if (/^\d+$/.test(part)) {
+      const n = Number(part);
+      if (n < 1) return { rows: [], error: `Row numbers start at 1 (got "${part}")` };
+      if (n > maxRows) return { rows: [], error: `Row ${n} out of range (CSV has ${maxRows} rows)` };
+      if (!seen.has(n)) { seen.add(n); rows.push(n); }
+    } else {
+      return { rows: [], error: `Invalid input "${part}" — use numbers or ranges like 5-8` };
+    }
+  }
+  return { rows, error: null };
+}
+
+function getSelectedRows() {
+  if (csvData.rows.length === 0) return { rows: [], error: null };
+  if (allRowsCheckbox.checked) {
+    return { rows: Array.from({ length: csvData.rows.length }, (_, i) => i + 1), error: null };
+  }
+  return parseRowSelection(rowLimitInput.value, csvData.rows.length);
+}
+
 function getRowCount() {
-  if (csvData.rows.length === 0) return 0;
-  if (allRowsCheckbox.checked) return csvData.rows.length;
-  return Math.min(Number(rowLimitInput.value) || 1, csvData.rows.length);
+  return getSelectedRows().rows.length;
 }
 
 function updateCostEstimate() {
   const costEl = $("#cost-estimate");
   const perImage = getPerImageCost();
-  const rows = getRowCount();
+  const selection = getSelectedRows();
+  const errorEl = $("#row-error");
+  const hasCsv = csvData.rows.length > 0;
+
+  if (errorEl) {
+    if (hasCsv && !allRowsCheckbox.checked && selection.error) {
+      errorEl.textContent = selection.error;
+      errorEl.classList.remove("hidden");
+      rowLimitInput.classList.add("invalid");
+    } else {
+      errorEl.textContent = "";
+      errorEl.classList.add("hidden");
+      rowLimitInput.classList.remove("invalid");
+    }
+  }
+
+  if (generateBtn) {
+    generateBtn.disabled = hasCsv && !allRowsCheckbox.checked && !!selection.error;
+  }
+
+  const rows = selection.rows.length;
   if (rows === 0) {
     costEl.textContent = `~$${perImage.toFixed(2)} per image`;
     return;
@@ -363,12 +419,10 @@ function renderCSVPreview() {
       .join("")}</tbody>
   `;
 
-  const rowLimit = $("#row-limit");
-  rowLimit.max = csvData.rows.length;
   if (allRowsCheckbox.checked) {
-    rowLimit.value = csvData.rows.length;
-  } else {
-    rowLimit.value = Math.min(1, csvData.rows.length);
+    rowLimitInput.value = `1-${csvData.rows.length}`;
+  } else if (!rowLimitInput.value.trim()) {
+    rowLimitInput.value = "1";
   }
   updateCostEstimate();
 }
@@ -411,7 +465,7 @@ const downloadAllBtn = $("#download-all-btn");
 
 allRowsCheckbox.addEventListener("change", () => {
   if (allRowsCheckbox.checked && csvData.rows.length > 0) {
-    rowLimitInput.value = csvData.rows.length;
+    rowLimitInput.value = `1-${csvData.rows.length}`;
   }
   rowLimitInput.disabled = allRowsCheckbox.checked;
   updateCostEstimate();
@@ -593,9 +647,17 @@ async function startGeneration() {
     return;
   }
 
-  const limit = allRowsCheckbox.checked
-    ? csvData.rows.length
-    : Math.min(Number(rowLimitInput.value) || 1, csvData.rows.length);
+  const selection = getSelectedRows();
+  if (selection.error) {
+    alert(selection.error);
+    return;
+  }
+  const selectedRows = selection.rows;
+  if (selectedRows.length === 0) {
+    alert("No rows selected.");
+    return;
+  }
+  const total = selectedRows.length;
 
   const size = imageSize.value;
   const model = imageModel.value;
@@ -610,23 +672,24 @@ async function startGeneration() {
 
   const generatedImages = [];
 
-  for (let i = 0; i < limit; i++) {
+  for (let i = 0; i < total; i++) {
     if (stopRequested) break;
 
-    const row = csvData.rows[i];
+    const rowNumber = selectedRows[i];
+    const row = csvData.rows[rowNumber - 1];
     const resolvedPrompt = resolvePrompt(prompt, row);
-    const filename = resolveFilename(filenamePattern, row, i + 1);
+    const filename = resolveFilename(filenamePattern, row, rowNumber);
 
-    progressFill.style.width = `${((i) / limit) * 100}%`;
-    updateFlavorText(i + 1, limit);
-    const flavorInterval = setInterval(() => updateFlavorText(i + 1, limit), 7000);
+    progressFill.style.width = `${((i) / total) * 100}%`;
+    updateFlavorText(i + 1, total);
+    const flavorInterval = setInterval(() => updateFlavorText(i + 1, total), 7000);
 
     try {
       const imageUrl = await generateImage(apiKey, resolvedPrompt, size, model);
-      generatedImages.push({ url: imageUrl, prompt: resolvedPrompt, row: i + 1, filename });
-      addResultCard(imageUrl, resolvedPrompt, i + 1);
+      generatedImages.push({ url: imageUrl, prompt: resolvedPrompt, row: rowNumber, filename });
+      addResultCard(imageUrl, resolvedPrompt, rowNumber);
     } catch (err) {
-      addErrorCard(err.message, resolvedPrompt, i + 1);
+      addErrorCard(err.message, resolvedPrompt, rowNumber);
     }
 
     clearInterval(flavorInterval);
@@ -635,7 +698,7 @@ async function startGeneration() {
   progressFill.style.width = "100%";
   progressFill.style.background = "";
   progressText.textContent = stopRequested
-    ? `Stopped. Generated ${generatedImages.length} of ${limit} images.`
+    ? `Stopped. Generated ${generatedImages.length} of ${total} images.`
     : `Done. Generated ${generatedImages.length} images.`;
   progressText.style.fontStyle = "normal";
 

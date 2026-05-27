@@ -127,9 +127,10 @@
         <div class="generate-options">
           <label class="setting-label">Rows
             <div class="rows-input">
-              <input type="number" id="row-limit" min="1" value="1" />
+              <input type="text" id="row-limit" value="1" placeholder="e.g. 1, 3, 5-8" />
               <label class="checkbox-label"><input type="checkbox" id="all-rows" /> All</label>
             </div>
+            <p id="row-error" class="row-error hidden"></p>
           </label>
           <label class="setting-label">Filename
             <input type="text" id="filename-pattern" value="image-{{rowNumber}}" placeholder="image-{{rowNumber}}" class="filename-input" />
